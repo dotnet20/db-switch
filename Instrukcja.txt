@@ -1,0 +1,6 @@
+Z folderu Debug skopiowaæ najlepiej do innego katalogu
+W zmiennych œrodowiskowych dodaæ do PATH folder z plikami programu
+Wejœæ w CMD i wpisaæ: db-switch --init
+Utworzy sie plik konfiguracyjny o nazwie "appsettings.json" w folderze z którego uruchomiono program
+Ustawiæ wed³ug schematu w utworzonym pliku
+Ponownie wejœæ w CMD i wpisaæ: db-switch -env <nazwa>
