@@ -4,6 +4,7 @@ namespace db_switch
 {
     public class AppConfigRoot
     {
-        [JsonPropertyName("app_config")] public AppConfig AppConfig { get; set; } = default!;
+        [JsonPropertyName("app_config")]
+        public AppConfig AppConfig { get; set; } = default!;
     }
 }
