@@ -15,20 +15,50 @@ namespace db_switch
                 return 1;
             }
 
-            var config = JsonSerializer.Deserialize<AppConfigRoot>(File.ReadAllText(configPath));
-            using var conn = new SqlConnection(config!.AppConfig.ConnectionString);
+            var jsonString = File.ReadAllText(configPath);
+            var config = JsonSerializer.Deserialize<AppConfigRoot>(jsonString);
+
+            if (config?.AppConfig?.Environments == null)
+            {
+                Console.WriteLine("No defined environments in the configuration.");
+                return 1;
+            }
+
+            var databasesToDelete = config.AppConfig.Environments
+                .SelectMany(e => e.Backups)
+                .Select(b => b.DbName)
+                .Distinct()
+                .ToList();
+
+            if (!databasesToDelete.Any())
+            {
+                Console.WriteLine("No databases to delete.");
+                return 0;
+            }
+
+            using var conn = new SqlConnection(config.AppConfig.ConnectionString);
             try
             {
                 conn.Open();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Conn Error: {ex.Message}"); return 1;
+                Console.WriteLine($"Conn Error: {ex.Message}");
+                return 1;
             }
 
-            Program.ExecuteSql(conn, @"USE master; DECLARE @sql NVARCHAR(MAX) = N''; 
-                SELECT @sql += N'ALTER DATABASE [' + name + '] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [' + name + ']; ' 
-                FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb'); EXEC sp_executesql @sql;", "Dropping all user databases");
+            foreach (var dbName in databasesToDelete)
+            {
+                string sql = $@"
+                USE master; 
+                IF EXISTS (SELECT name FROM sys.databases WHERE name = N'{dbName.Replace("'", "''")}')
+                BEGIN
+                    ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; 
+                    DROP DATABASE [{dbName}]; 
+                END";
+
+                Program.ExecuteSql(conn, sql, $"Dropping database {dbName}");
+            }
 
             Console.WriteLine("All user databases deleted.");
             return 0;
