@@ -9,7 +9,7 @@ namespace db_switch
         [CommandArgument(0, "<ENVIRONMENT>")]
         public string EnvironmentName { get; set; } = string.Empty;
 
-        [CommandOption("-d|--db <DATABASE>")]
+        [CommandOption("--db <DATABASE>")]
         public string? DatabaseName { get; set; }
 
         [CommandOption("--skip-post|--no-post")]
